@@ -1,11 +1,11 @@
 import axios from "axios";
 
-const tirelireAPI = axios.create({
+const apiTirelire = axios.create({
   URL: process.env.REACT_APP_API_TIRELIRE,
 });
 
-const darnaAPI = axios.create({
+const apiDarna = axios.create({
   URL: process.env.process.env.REACT_APP_API_DARNA,
 });
 
-export {tirelireAPI , darnaAPI};
+export { apiTirelire, apiDarna };
