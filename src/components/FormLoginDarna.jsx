@@ -11,7 +11,7 @@ export default function FormLoginDarna({onSubmit}){
 
     const submit = (e)=>{
         e.preventDefault();
-        onsubmit(data);
+        onSubmit(data);
     }
 
     return (

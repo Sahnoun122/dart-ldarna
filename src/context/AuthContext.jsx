@@ -1,49 +1,51 @@
 import { createContext , useContext , useState } from "react";
 
 import { apiDarna ,apiTirelire } from "../services/api";
+import { useNavigate } from "react-router-dom"; 
+
 
 
 const AuthContext = createContext();
 
 export function AuthProvider ({children}){
-    const [utilisateur , setUtilisateur] = useState(null);
+  const [utilisateur, setUtilisateur] = useState(null);
+  const navigate = useNavigate(); 
 
-
-    const enregistrer = async(donnes , type)=>{
+  const enregistrer = async (donnes, type) => {
     const api = type === "darna" ? apiDarna : apiTirelire;
 
-        const reponse = await api.post("/auth/register" , donnes);
-        setUtilisateur(reponse.data.utilisateur);
-    };
+    const reponse = await api.post("/auth/register", donnes);
+    setUtilisateur(reponse.data.utilisateur);
 
-   const connecter = async(type , donnes)=>{
+    navigate(type === "darna" ? "/dashboard-darna" : "/dashboard-tirelire");
+  };
 
+  const connecter = async (type, donnes) => {
     const api = type === "darna" ? apiDarna : apiTirelire;
-    const response = await api.post("/auth/login" , donnes);
+    const response = await api.post("/auth/login", donnes);
 
     setUtilisateur(response.data.utilisateur);
-   }
 
-   const deconnecter = ()=>{
+    navigate(type === "darna" ? "/dashboard-darna" : "/dashboard-tirelire");
+  };
+
+  const deconnecter = () => {
     setUtilisateur(null);
-   }
+  };
 
-   return(
-
+  return (
     <AuthContext.Provider
       value={{
         utilisateur,
         setUtilisateur,
         enregistrer,
         connecter,
-        deconnecter
+        deconnecter,
       }}
-
     >
-        {children}
+      {children}
     </AuthContext.Provider>
-   )
-
+  );
 };
 
 export const useAuth = ()=> useContext(AuthContext);
