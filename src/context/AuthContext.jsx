@@ -29,9 +29,10 @@ export function AuthProvider ({children}){
     navigate(type === "darna" ? "/dashboard-darna" : "/dashboard-tirelire");
   };
 
-  const deconnecter = () => {
-    setUtilisateur(null);
-  };
+    const deconnecter = () => {
+      setUtilisateur(null); 
+      navigate("/login"); 
+    };
 
   return (
     <AuthContext.Provider
