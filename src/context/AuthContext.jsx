@@ -10,16 +10,16 @@ export function AuthProvider ({children}){
 
 
     const enregistrer = async(donnes , type)=>{
-        const api = type ==="darn" ? apiDarna : apiTirelire;
+    const api = type === "darna" ? apiDarna : apiTirelire;
 
-        const reponse = await api.post("auth/register" , donnes);
+        const reponse = await api.post("/auth/register" , donnes);
         setUtilisateur(reponse.data.utilisateur);
     };
 
    const connecter = async(type , donnes)=>{
 
     const api = type === "darna" ? apiDarna : apiTirelire;
-    const response = await api.post("auth/login" , donnes);
+    const response = await api.post("/auth/login" , donnes);
 
     setUtilisateur(response.data.utilisateur);
    }

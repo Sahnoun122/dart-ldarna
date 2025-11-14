@@ -10,9 +10,9 @@ export default function FormTirelire ({ onSubmit}){
         national_id : "",
     });
 
-    const change = (e)=>{
-        setData({...data , [e.target.name] : [e.target.value] });
-    }
+ const change = (e) => {
+   setData({ ...data, [e.target.name]: e.target.value });
+ };
 
     const submit = (e)=>{
         e.preventDefault();
