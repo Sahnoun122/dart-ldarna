@@ -1,28 +1,56 @@
 import { useState } from "react";
-import ChoixPlateforme from "../components/ChoixPlateforme";
+import { useAuth } from "../context/AuthContext";
 import FormLoginDarna from "../components/FormLoginDarna";
 import FormLoginTirelire from "../components/FormLoginTirelire";
-import { useAuth } from "../context/AuthContext";
 
-export default function LoginPage() {
-  const [choix, setChoix] = useState("darna");
-  const { connecter } = useAuth();
 
-  const submit = (data) => {
-    connecter(choix, data);
+export default function Login() {
+  const { login, chooseAPI } = useAuth();
+  const [apiChoice, setApiChoice] = useState("darna");
+
+  const handleLogin = async (data) => {
+    chooseAPI(apiChoice); // choisir l’API avant connexion
+    try {
+      await login(data);
+    } catch (err) {
+      alert(err.response?.data?.message || err.message);
+    }
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-center">Connexion</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-4 text-center">Connexion</h2>
 
-      <ChoixPlateforme choix={choix} setChoix={setChoix} />
+        <div className="mb-4 flex gap-2 justify-center">
+          <button
+            type="button"
+            onClick={() => setApiChoice("darna")}
+            className={`px-3 py-1 rounded ${
+              apiChoice === "darna" ? "bg-blue-600 text-white" : "bg-gray-200"
+            }`}
+          >
+            Darna
+          </button>
+          <button
+            type="button"
+            onClick={() => setApiChoice("tirelire")}
+            className={`px-3 py-1 rounded ${
+              apiChoice === "tirelire"
+                ? "bg-green-600 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            Tirelire
+          </button>
+        </div>
 
-      {choix === "darna" ? (
-        <FormLoginDarna onSubmit={submit} />
-      ) : (
-        <FormLoginTirelire onSubmit={submit} />
-      )}
+        {apiChoice === "darna" ? (
+          <FormLoginDarna onSubmit={handleLogin} />
+        ) : (
+          <FormLoginTirelire onSubmit={handleLogin} />
+        )}
+      </div>
     </div>
   );
 }

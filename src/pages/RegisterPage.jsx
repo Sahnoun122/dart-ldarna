@@ -1,28 +1,63 @@
+import { useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
-import ChoixPlateforme from "../components/ChoixPlateforme";
 import FormDarna from "../components/FormDarna";
 import FormTirelire from "../components/FormTirelire";
-import { useAuth } from "../context/AuthContext";
+export default function Register() {
+  const { state } = useLocation();
+  const chosenPlan = state?.plan || null;
+  const { register, chooseAPI } = useAuth();
+  const [apiChoice, setApiChoice] = useState("darna");
 
-export default function RegisterPage() {
-  const [choix, setChoix] = useState("darna");
-  const { enregistrer } = useAuth();
-
-  const submit = (data) => {
-    enregistrer(data, choix);
+  const handleRegister = async (data) => {
+    chooseAPI(apiChoice); 
+    try {
+      await register({ ...data, planId: chosenPlan?._id || null });
+    } catch (err) {
+      alert(err.response?.data?.message || err.message);
+    }
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-center">Créer un compte</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-4 text-center">Créer un compte</h2>
 
-      <ChoixPlateforme choix={choix} setChoix={setChoix} />
+        <div className="mb-4 flex gap-2 justify-center">
+          <button
+            type="button"
+            onClick={() => setApiChoice("darna")}
+            className={`px-3 py-1 rounded ${
+              apiChoice === "darna" ? "bg-blue-600 text-white" : "bg-gray-200"
+            }`}
+          >
+            Darna
+          </button>
+          <button
+            type="button"
+            onClick={() => setApiChoice("tirelire")}
+            className={`px-3 py-1 rounded ${
+              apiChoice === "tirelire"
+                ? "bg-green-600 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            Tirelire
+          </button>
+        </div>
 
-      {choix === "darna" ? (
-        <FormDarna onSubmit={submit} />
-      ) : (
-        <FormTirelire onSubmit={submit} />
-      )}
+        {chosenPlan && (
+          <div className="mb-4 p-3 bg-gray-50 rounded">
+            Plan choisi: <strong>{chosenPlan.name}</strong>
+          </div>
+        )}
+
+        {apiChoice === "darna" ? (
+          <FormDarna onSubmit={handleRegister} />
+        ) : (
+          <FormTirelire onSubmit={handleRegister} />
+        )}
+      </div>
     </div>
   );
 }
