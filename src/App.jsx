@@ -2,8 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
-import DashboardDarna from "./pages/DashboardDarna";
-import DashboardTirelire from "./pages/DashboardTirelire";
+import DashboardDarna from "./pages/darna/DashboardDarna";
+import DashboardTirelire from "./pages/tirelire/DashboardTirelire";
 import Pricing from "./pages/Pricing";
 import Home from "./pages/Home";
 

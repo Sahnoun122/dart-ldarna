@@ -30,7 +30,7 @@ export function AuthProvider({ children }) {
       setUser(u);
       localStorage.setItem("user", JSON.stringify(u));
     }
-    navigate("/dashboard");
+    navigate(apiType === "darna" ? "/dashboard-darna" : "/dashboard-tirelire");
   };
 
   const login = async (payload) => {
