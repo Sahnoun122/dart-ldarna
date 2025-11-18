@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
 import FormLoginDarna from "../components/FormLoginDarna";
 import FormLoginTirelire from "../components/FormLoginTirelire";
 
 
 export default function Login() {
   const { login, chooseAPI } = useAuth();
+  const { error } = useNotification();
   const [apiChoice, setApiChoice] = useState("darna");
 
   const handleLogin = async (data) => {
-    chooseAPI(apiChoice); // choisir l’API avant connexion
+    chooseAPI(apiChoice);
     try {
       await login(data);
     } catch (err) {
-      alert(err.response?.data?.message || err.message);
+      const errorMsg = err.response?.data?.message || err.message;
+      error("Erreur de connexion: " + errorMsg);
     }
   };
 

@@ -10,9 +10,8 @@ export function AuthProvider({ children }) {
     JSON.parse(localStorage.getItem("user") || "null")
   );
   const [token, setToken] = useState(localStorage.getItem("token") || null);
-  const [apiType, setApiType] = useState("darna"); // default Darna
+  const [apiType, setApiType] = useState("darna");
 
-  // choisir l'API
   const chooseAPI = (type) => setApiType(type);
 
   const getAPI = () => (apiType === "darna" ? apiDarna : apiTirelire);
@@ -20,32 +19,46 @@ export function AuthProvider({ children }) {
   const register = async (payload) => {
     const api = getAPI();
     const res = await api.post("/auth/register", payload);
-    const { user: u, token: t } = res.data;
-    if (t) {
-      setToken(t);
-      localStorage.setItem("token", t);
-      api.defaults.headers.common["Authorization"] = `Bearer ${t}`;
+    
+    const { user: u, token: t, accessToken } = res.data;
+    const tokenToUse = t || accessToken;
+    
+    if (tokenToUse) {
+      setToken(tokenToUse);
+      localStorage.setItem("token", tokenToUse);
+      api.defaults.headers.common["Authorization"] = `Bearer ${tokenToUse}`;
+    } else {
+      throw new Error("Aucun token d'authentification reçu");
     }
+    
     if (u) {
       setUser(u);
       localStorage.setItem("user", JSON.stringify(u));
     }
+    
     navigate(apiType === "darna" ? "/dashboard-darna" : "/dashboard-tirelire");
   };
 
   const login = async (payload) => {
     const api = getAPI();
     const res = await api.post("/auth/login", payload);
-    const { user: u, token: t } = res.data;
-    if (t) {
-      setToken(t);
-      localStorage.setItem("token", t);
-      api.defaults.headers.common["Authorization"] = `Bearer ${t}`;
+    
+    const { user: u, token: t, accessToken } = res.data;
+    const tokenToUse = t || accessToken;
+    
+    if (tokenToUse) {
+      setToken(tokenToUse);
+      localStorage.setItem("token", tokenToUse);
+      api.defaults.headers.common["Authorization"] = `Bearer ${tokenToUse}`;
+    } else {
+      throw new Error("Aucun token d'authentification reçu");
     }
+    
     if (u) {
       setUser(u);
       localStorage.setItem("user", JSON.stringify(u));
     }
+    
     navigate(apiType === "darna" ? "/dashboard-darna" : "/dashboard-tirelire");
   };
 

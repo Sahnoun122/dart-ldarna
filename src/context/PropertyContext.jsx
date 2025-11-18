@@ -1,86 +1,102 @@
-import { createContext , useContext , useState , useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { apiDarna } from "../services/api";
+import { useAuth } from "./AuthContext";
 
-const   PropretyContext = createContext();
+const PropertyContext = createContext();
 
+export function PropertyProvider({ children }) {
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { token, user } = useAuth();
 
-export function     PropretyPrivider ({children}){
-    const [properties , setProperties]= useEffect([]);
-    const [loading , setLoading] = useState(false);
-
-    const Properites = async()=>{
-        setLoading(true)
-        try {
-            
-            const res = await apiDarna.get("properties");
-            setProperties(res.data)
-        } catch (error) {
-            console.error(error)
-        }finally{
-            setLoading(false)
-        }
-    }
-
-const  createProperty = async(data)=>{
-     setLoading(true)
-
-     try {
-        const res = await apiDarna.post("/properties" , data);
-        setProperties([...properties , res.data]);
-        return res.data;
-     } catch (error) {
-        console.error(error);
-     }finally{
-        setLoading(false)
-     }
+  const getProperties = async () => {
+    if (!token || !user) {
+      setProperties([]);
+      return;
     }
     
-    const updateProperty = async(id , data)=>{
-        setLoading(true);
-
-        try {
-            const res = await apiDarna.patch(`/properties/${id}`, data);
-            setProperties(properties.map((d)=> d.id === id ? res.data : d))
-            return res.data
-        } catch (error) {
-            console.error(error)
-        }finally{
-            setLoading(false)
-        }
+    setLoading(true);
+    try {
+      const res = await apiDarna.get("/properties");
+      setProperties(res.data);
+    } catch (e) {
+      console.error("Erreur lors du chargement des propriétés:", e);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const deleteProperty = async(id)=>{
-        setLoading(true);
-
-        try {
-            const res = await apiDarna.delete(`/properties/${id}`);
-            setProperties(properties.filter(d => d.id === id));
-            
-        } catch (error) {
-            console.error(error)
-            
-        }finally{
-            setProperties(false)
-        }
+  const createProperty = async (data) => {
+    if (!token || !user) {
+      throw new Error("Vous devez être connecté pour créer une annonce");
     }
+    
+    setLoading(true);
+    try {
+      const res = await apiDarna.post("/properties", data);
+      setProperties([...properties, res.data]);
+      return res.data;
+    } catch (e) {
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(()=>{
-        Properites();
-    },[]);
+  const deleteProperty = async (id) => {
+    if (!token || !user) {
+      throw new Error("Vous devez être connecté pour supprimer une annonce");
+    }
+    
+    setLoading(true);
+    try {
+      await apiDarna.delete(`/properties/${id}`);
+      setProperties(properties.filter((p) => p._id !== id));
+    } catch (e) {
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const updateProperty = async (id, data) => {
+    if (!token || !user) {
+      throw new Error("Vous devez être connecté pour modifier une annonce");
+    }
+    
+    setLoading(true);
+    try {
+      const res = await apiDarna.put(`/properties/${id}`, data);
+      setProperties(properties.map((p) => (p._id === id ? res.data : p)));
+      return res.data;
+    } catch (e) {
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Only fetch properties if user is authenticated
+    if (token && user) {
+      getProperties();
+    }
+  }, [token, user]);
 
   return (
-    <PropretyPrivider.Provider
+    <PropertyContext.Provider
       value={{
-        loading,
-        setLoading,
         properties,
-        setProperties,
+        loading,
+        createProperty,
+        deleteProperty,
+        updateProperty,
+        refreshProperties: getProperties,
       }}
     >
       {children}
-    </PropretyPrivider.Provider>
+    </PropertyContext.Provider>
   );
 }
 
-export const useProperties = ()=> useContext(PropretyContext);
+export const useProperties = () => useContext(PropertyContext);

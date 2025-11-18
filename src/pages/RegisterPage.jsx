@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
 import { useState } from "react";
 import FormDarna from "../components/FormDarna";
 import FormTirelire from "../components/FormTirelire";
@@ -7,6 +8,7 @@ export default function Register() {
   const { state } = useLocation();
   const chosenPlan = state?.plan || null;
   const { register, chooseAPI } = useAuth();
+  const { error } = useNotification();
   const [apiChoice, setApiChoice] = useState("darna");
 
   const handleRegister = async (data) => {
@@ -14,7 +16,7 @@ export default function Register() {
     try {
       await register({ ...data, planId: chosenPlan?._id || null });
     } catch (err) {
-      alert(err.response?.data?.message || err.message);
+      error(err.response?.data?.message || err.message);
     }
   };
 
