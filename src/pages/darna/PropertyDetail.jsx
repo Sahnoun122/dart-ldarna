@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useProperties } from "../../context/PropertyContext"; 
+import { useProperties } from "../../context/PropertyContext"; // adapte le chemin
 import axios from "axios";
 
 function PropertyDetail() {
-  const { id } = useParams(); 
+  const { id } = useParams(); // récupère l'id depuis l'URL
   const { getPropertyById } = useProperties();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +31,7 @@ function PropertyDetail() {
     <div className="max-w-5xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">{property.title}</h1>
 
+      {/* Galerie d'images */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
         {property.media?.images?.length > 0 ? (
           property.media.images.map((img, i) => (
@@ -50,6 +51,7 @@ function PropertyDetail() {
         )}
       </div>
 
+      {/* Infos principales */}
       <div className="mb-4">
         <p className="text-gray-700 mb-1">
           💰 Prix: {property.price.toLocaleString()} MAD
@@ -65,11 +67,13 @@ function PropertyDetail() {
         </p>
       </div>
 
+      {/* Description */}
       <div className="mb-4">
         <h2 className="text-xl font-semibold mb-2">Description</h2>
         <p className="text-gray-600">{property.description}</p>
       </div>
 
+      {/* Caractéristiques */}
       <div className="mb-4">
         <h2 className="text-xl font-semibold mb-2">Caractéristiques</h2>
         <ul className="grid grid-cols-2 md:grid-cols-4 gap-2 text-gray-700">

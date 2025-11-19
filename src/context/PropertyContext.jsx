@@ -14,10 +14,12 @@ export function PropertyProvider({ children }) {
       setProperties([]);
       return;
     }
-    
+
     setLoading(true);
     try {
-      const res = await apiDarna.get("/properties");
+      const res = await apiDarna.get("/properties/mine", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setProperties(res.data);
     } catch (e) {
       console.error("Erreur lors du chargement des propriétés:", e);
@@ -27,13 +29,13 @@ export function PropertyProvider({ children }) {
   };
 
   const createProperty = async (data) => {
-    if (!token || !user) {
-      throw new Error("Vous devez être connecté pour créer une annonce");
-    }
-    
+    if (!token || !user) throw new Error("Vous devez être connecté");
+
     setLoading(true);
     try {
-      const res = await apiDarna.post("/properties", data);
+      const res = await apiDarna.post("/properties", data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setProperties([...properties, res.data]);
       return res.data;
     } catch (e) {
@@ -44,13 +46,13 @@ export function PropertyProvider({ children }) {
   };
 
   const deleteProperty = async (id) => {
-    if (!token || !user) {
-      throw new Error("Vous devez être connecté pour supprimer une annonce");
-    }
-    
+    if (!token || !user) throw new Error("Vous devez être connecté");
+
     setLoading(true);
     try {
-      await apiDarna.delete(`/properties/${id}`);
+      await apiDarna.delete(`/properties/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setProperties(properties.filter((p) => p._id !== id));
     } catch (e) {
       throw e;
@@ -60,13 +62,13 @@ export function PropertyProvider({ children }) {
   };
 
   const updateProperty = async (id, data) => {
-    if (!token || !user) {
-      throw new Error("Vous devez être connecté pour modifier une annonce");
-    }
-    
+    if (!token || !user) throw new Error("Vous devez être connecté");
+
     setLoading(true);
     try {
-      const res = await apiDarna.put(`/properties/${id}`, data);
+      const res = await apiDarna.put(`/properties/${id}`, data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setProperties(properties.map((p) => (p._id === id ? res.data : p)));
       return res.data;
     } catch (e) {
@@ -79,13 +81,13 @@ export function PropertyProvider({ children }) {
   const getPropertyById = async (id) => {
     setLoading(true);
     try {
-      const res = await apiDarna.get(`/properties/${id}`);
-      return res.data; 
+      const res = await apiDarna.get(`/properties/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data.user !== user._id) return null;
+      return res.data;
     } catch (e) {
-      console.error(
-        "Erreur lors du chargement de la propriété:",
-        e.response?.data || e.message
-      );
+      console.error("Erreur lors du chargement de la propriété:", e);
       return null;
     } finally {
       setLoading(false);
@@ -93,9 +95,7 @@ export function PropertyProvider({ children }) {
   };
 
   useEffect(() => {
-    if (token && user) {
-      getProperties();
-    }
+    if (token && user) getProperties();
   }, [token, user]);
 
   return (
