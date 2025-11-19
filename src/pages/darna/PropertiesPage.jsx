@@ -4,7 +4,8 @@ import { useNotification } from "../../context/NotificationContext";
 import ChampSaisie from "../../components/ChampSaisie";
 import Modal from "../../components/Modal";
 import ConfirmModal from "../../components/ConfirmModal";
-import { p } from "framer-motion/m";
+import UploadLocal from "../../components/UploadLocal";
+import { Link } from "react-router-dom";
 
 export default function PropertiesPage() {
   const {
@@ -13,6 +14,7 @@ export default function PropertiesPage() {
     deleteProperty,
     updateProperty,
     loading,
+    getPropertyById,
   } = useProperties();
 
   const { success, error } = useNotification();
@@ -20,7 +22,10 @@ export default function PropertiesPage() {
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editingProperty, setEditingProperty] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, propertyId: null });
+  const [confirmDelete, setConfirmDelete] = useState({
+    isOpen: false,
+    propertyId: null,
+  });
 
   const [form, setForm] = useState({
     title: "",
@@ -38,21 +43,14 @@ export default function PropertiesPage() {
       rules: "",
       energyRating: "",
     },
-    media: { images: "", videos: "" },
+    media: { images: [], videos: [] },
   });
 
   const change = (e) => {
     const { name, value } = e.target;
-
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
-      setForm({
-        ...form,
-        [parent]: {
-          ...form[parent],
-          [child]: value,
-        },
-      });
+      setForm({ ...form, [parent]: { ...form[parent], [child]: value } });
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -60,46 +58,36 @@ export default function PropertiesPage() {
 
   const submit = async (e) => {
     e.preventDefault();
-
     try {
-      // Préparation des données selon le format attendu par le backend
       const propertyData = {
         ...form,
         characteristics: {
           ...form.characteristics,
-          equipment: form.characteristics.equipment 
-            ? form.characteristics.equipment.split(',').map(item => item.trim()).filter(item => item)
+          equipment: form.characteristics.equipment
+            ? form.characteristics.equipment
+                .split(",")
+                .map((i) => i.trim())
+                .filter(Boolean)
             : [],
-          rules: form.characteristics.rules 
-            ? form.characteristics.rules.split(',').map(item => item.trim()).filter(item => item)
-            : []
+          rules: form.characteristics.rules
+            ? form.characteristics.rules
+                .split(",")
+                .map((i) => i.trim())
+                .filter(Boolean)
+            : [],
         },
-        media: {
-          images: form.media.images 
-            ? form.media.images.split(',').map(url => url.trim()).filter(url => url)
-            : [],
-          videos: form.media.videos 
-            ? form.media.videos.split(',').map(url => url.trim()).filter(url => url)
-            : []
-        }
       };
 
       if (editMode) {
         await updateProperty(editingProperty._id, propertyData);
-        success("Annonce modifiée avec succès !");
+        success("Annonce modifiée !");
       } else {
         await createProperty(propertyData);
-        success("Annonce ajoutée avec succès !");
+        success("Annonce ajoutée !");
       }
-      
       resetForm();
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 
-                          err.response?.data?.message || 
-                          err.message || 
-                          "Une erreur inconnue s'est produite";
-      
-      error(`Erreur: ${errorMessage}`);
+      error("Erreur: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -123,7 +111,7 @@ export default function PropertiesPage() {
         rules: "",
         energyRating: "",
       },
-      media: { images: "", videos: "" },
+      media: { images: [], videos: [] },
     });
   };
 
@@ -136,25 +124,17 @@ export default function PropertiesPage() {
       transactionType: property.transactionType,
       price: property.price,
       availability: property.availability,
-      location: {
-        address: property.location.address || "",
-        city: property.location.city || "",
-        latitude: property.location.latitude || 0,
-        longitude: property.location.longitude || 0,
-      },
+      location: property.location,
       characteristics: {
-        surface: property.characteristics.surface || 0,
-        rooms: property.characteristics.rooms || 0,
-        bedrooms: property.characteristics.bedrooms || 0,
-        bathrooms: property.characteristics.bathrooms || 0,
-        equipment: property.characteristics.equipment ? property.characteristics.equipment.join(", ") : "",
-        rules: property.characteristics.rules ? property.characteristics.rules.join(", ") : "",
-        energyRating: property.characteristics.energyRating || "",
+        surface: property.characteristics.surface,
+        rooms: property.characteristics.rooms,
+        bedrooms: property.characteristics.bedrooms,
+        bathrooms: property.characteristics.bathrooms,
+        equipment: property.characteristics.equipment?.join(", "),
+        rules: property.characteristics.rules?.join(", "),
+        energyRating: property.characteristics.energyRating,
       },
-      media: {
-        images: property.media.images ? property.media.images.join(", ") : "",
-        videos: property.media.videos ? property.media.videos.join(", ") : "",
-      },
+      media: property.media,
     });
     setOpen(true);
   };
@@ -162,9 +142,9 @@ export default function PropertiesPage() {
   const handleDelete = async (id) => {
     try {
       await deleteProperty(id);
-      success("Annonce supprimée avec succès !");
+      success("Annonce supprimée !");
     } catch (err) {
-      error("Erreur lors de la suppression: " + (err.response?.data?.message || err.message));
+      error("Erreur suppression : " + err.message);
     }
   };
 
@@ -173,22 +153,18 @@ export default function PropertiesPage() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between mb-6">
+    <div className="max-w-6xl mx-auto p-4">
+      <div className="flex justify-between mb-6 items-center">
         <h2 className="text-2xl font-bold">Mes Annonces</h2>
-
         <button
-          onClick={() => {
-            setEditMode(false);
-            setEditingProperty(null);
-            setOpen(true);
-          }}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          onClick={() => setOpen(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
         >
           + Ajouter une annonce
         </button>
       </div>
 
+      {/* ---------- MODAL ---------- */}
       <Modal open={open} onClose={resetForm}>
         <h3 className="text-xl font-semibold mb-4">
           {editMode ? "Modifier l'annonce" : "Créer une annonce"}
@@ -200,7 +176,6 @@ export default function PropertiesPage() {
             name="title"
             value={form.title}
             onChange={change}
-            placeholder="Titre de l'annonce"
             required
           />
           <ChampSaisie
@@ -208,25 +183,18 @@ export default function PropertiesPage() {
             name="description"
             value={form.description}
             onChange={change}
-            placeholder="Description..."
           />
-
-          <div className="space-y-3">
-            <label className="block text-orange-200 font-semibold text-lg">
-              Type de transaction
-            </label>
-            <select
-              name="transactionType"
-              value={form.transactionType}
-              onChange={change}
-              className="w-full px-4 py-4 bg-black/50 border border-orange-500/30 rounded-xl text-white text-lg placeholder-orange-300/50 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all duration-300 hover:border-orange-400/60"
-            >
-              <option value="vente">Vente</option>
-              <option value="location_journalière">Location journalière</option>
-              <option value="location_mensuelle">Location mensuelle</option>
-              <option value="location_longue">Location longue durée</option>
-            </select>
-          </div>
+          <select
+            name="transactionType"
+            value={form.transactionType}
+            onChange={change}
+            className="w-full p-3 rounded border"
+          >
+            <option value="vente">Vente</option>
+            <option value="location_journalière">Location journalière</option>
+            <option value="location_mensuelle">Location mensuelle</option>
+            <option value="location_longue">Location longue durée</option>
+          </select>
 
           <ChampSaisie
             label="Prix"
@@ -269,7 +237,7 @@ export default function PropertiesPage() {
           <h4 className="text-lg font-semibold mt-4">Caractéristiques</h4>
           <div className="grid grid-cols-3 gap-4">
             <ChampSaisie
-              label="Surface (m²)"
+              label="Surface"
               name="characteristics.surface"
               type="number"
               value={form.characteristics.surface}
@@ -301,14 +269,12 @@ export default function PropertiesPage() {
               name="characteristics.equipment"
               value={form.characteristics.equipment}
               onChange={change}
-              placeholder="wifi, clim..."
             />
             <ChampSaisie
               label="Règles"
               name="characteristics.rules"
               value={form.characteristics.rules}
               onChange={change}
-              placeholder="no smoking..."
             />
             <ChampSaisie
               label="Énergie"
@@ -318,81 +284,96 @@ export default function PropertiesPage() {
             />
           </div>
 
-          <h4 className="text-lg font-semibold mt-4">Médias</h4>
-          <ChampSaisie
-            label="Images (URLs séparées par virgules)"
-            name="media.images"
-            value={form.media.images}
-            onChange={change}
-          />
-          <ChampSaisie
-            label="Vidéos (URLs)"
-            name="media.videos"
-            value={form.media.videos}
-            onChange={change}
+          <h4 className="text-lg font-semibold mt-4">Images</h4>
+          <UploadLocal
+            onUpload={(url) =>
+              setForm((prev) => ({
+                ...prev,
+                media: { ...prev.media, images: [...prev.media.images, url] },
+              }))
+            }
           />
 
-          <button className="w-full bg-blue-600 text-white py-3 rounded-xl mt-4">
+          <div className="flex gap-2 mt-3 flex-wrap">
+            {form.media.images.map((img, i) => (
+              <img
+                key={i}
+                src={img}
+                alt="preview"
+                className="w-24 h-24 object-cover rounded border"
+              />
+            ))}
+          </div>
+
+          <button className="w-full bg-blue-600 text-white py-3 rounded-xl mt-4 hover:bg-blue-700 transition">
             {editMode ? "Modifier l'annonce" : "Créer l'annonce"}
           </button>
         </form>
       </Modal>
 
+      {/* ---------- Liste des propriétés ---------- */}
       {loading ? (
-        <div className="flex justify-center py-8">
-          <div className="text-lg">Chargement des annonces...</div>
-        </div>
+        <div className="text-center py-10">Chargement...</div>
       ) : (
         <div className="grid gap-4">
           {properties.map((property) => (
-            <div key={property._id} className="border rounded-lg p-4 bg-white shadow-sm">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                    {property.title}
-                  </h3>
-                  <p className="text-gray-600 mb-2">{property.description}</p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
-                    <span className="bg-blue-100 px-2 py-1 rounded">
-                      {property.transactionType}
-                    </span>
-                    <span className="font-semibold text-lg text-green-600">
-                      {property.price.toLocaleString()} MAD
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    📍 {property.location.address}, {property.location.city}
-                  </p>
-                  {property.characteristics && (
-                    <div className="flex gap-4 text-sm text-gray-500 mt-2">
-                      <span>🏠 {property.characteristics.surface} m²</span>
-                      <span>🚪 {property.characteristics.rooms} pièces</span>
-                      <span>🛏️ {property.characteristics.bedrooms} chambres</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2 ml-4">
-                  <button
-                    onClick={() => handleEdit(property)}
-                    className="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600"
-                  >
-                    Modifier
-                  </button>
-                  <button
-                    onClick={() => confirmDeleteAction(property._id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
-                  >
-                    Supprimer
-                  </button>
-                </div>
+            <div
+              key={property._id}
+              className="border rounded-lg p-4 bg-white shadow-sm flex flex-col md:flex-row gap-4"
+            >
+              {/* Images */}
+              <div className="flex gap-2 overflow-x-auto md:flex-col w-full md:w-48">
+                {property.media?.images?.length > 0 ? (
+                  property.media.images.map((img, i) => (
+                    <img
+                      key={i}
+                      src={img}
+                      alt={`Image ${i + 1}`}
+                      className="w-24 h-24 object-cover rounded border"
+                    />
+                  ))
+                ) : (
+                  <img
+                    src="https://via.placeholder.com/150"
+                    alt="placeholder"
+                    className="w-24 h-24 object-cover rounded border"
+                  />
+                )}
+              </div>
+
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold">{property.title}</h3>
+                <p className="text-gray-600 text-sm">{property.description}</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  📍 {property.location.address}, {property.location.city}
+                </p>
+                <p className="text-gray-700 mt-1">
+                  💰 Prix: {property.price.toLocaleString()} MAD
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 md:items-end">
+                <Link
+                  to={`/properties/${property._id}`}
+                  className="bg-green-500 text-white px-3 py-1 rounded text-center hover:bg-green-600 transition"
+                >
+                  Voir détails
+                </Link>
+                <button
+                  className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 transition"
+                  onClick={() => handleEdit(property)}
+                >
+                  Modifier
+                </button>
+                <button
+                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                  onClick={() => confirmDeleteAction(property._id)}
+                >
+                  Supprimer
+                </button>
               </div>
             </div>
           ))}
-          {properties.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              Aucune annonce trouvée. Créez votre première annonce !
-            </div>
-          )}
         </div>
       )}
 
@@ -401,7 +382,7 @@ export default function PropertiesPage() {
         onClose={() => setConfirmDelete({ isOpen: false, propertyId: null })}
         onConfirm={() => handleDelete(confirmDelete.propertyId)}
         title="Supprimer l'annonce"
-        message="Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible."
+        message="Voulez-vous vraiment supprimer cette annonce ?"
       />
     </div>
   );

@@ -8,7 +8,7 @@ import Home from "./pages/Home";
 import PropertiesPage from "./pages/darna/PropertiesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotificationContainer from "./components/NotificationContainer";
-
+import PropertyDetail from "./pages/darna/PropertyDetail";
 export default function App() {
   return (
     <>
@@ -18,30 +18,31 @@ export default function App() {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route 
-          path="/dashboard-darna" 
+        <Route
+          path="/dashboard-darna"
           element={
             <ProtectedRoute>
               <DashboardDarna />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/dashboard-tirelire" 
+        <Route
+          path="/dashboard-tirelire"
           element={
             <ProtectedRoute>
               <DashboardTirelire />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/properties" 
+        <Route
+          path="/properties"
           element={
             <ProtectedRoute>
               <PropertiesPage />
             </ProtectedRoute>
-          } 
+          }
         />
+        <Route path="/properties/:id" element={<PropertyDetail />} />
       </Routes>
     </>
   );

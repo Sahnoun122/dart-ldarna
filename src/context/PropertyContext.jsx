@@ -76,8 +76,23 @@ export function PropertyProvider({ children }) {
     }
   };
 
+  const getPropertyById = async (id) => {
+    setLoading(true);
+    try {
+      const res = await apiDarna.get(`/properties/${id}`);
+      return res.data; 
+    } catch (e) {
+      console.error(
+        "Erreur lors du chargement de la propriété:",
+        e.response?.data || e.message
+      );
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Only fetch properties if user is authenticated
     if (token && user) {
       getProperties();
     }
@@ -92,6 +107,7 @@ export function PropertyProvider({ children }) {
         deleteProperty,
         updateProperty,
         refreshProperties: getProperties,
+        getPropertyById,
       }}
     >
       {children}
