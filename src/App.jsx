@@ -9,6 +9,9 @@ import PropertiesPage from "./pages/darna/PropertiesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotificationContainer from "./components/NotificationContainer";
 import PropertyDetail from "./pages/darna/PropertyDetail";
+
+import Annonces from "./pages/Annonces";
+import AnnonceDetail from "./pages/AnnonceDetail";
 export default function App() {
   return (
     <>
@@ -43,6 +46,8 @@ export default function App() {
           }
         />
         <Route path="/properties/:id" element={<PropertyDetail />} />
+        <Route path="/annonces" element={<Annonces />} />
+        <Route path="/annonce/:id" element={<AnnonceDetail />} />
       </Routes>
     </>
   );

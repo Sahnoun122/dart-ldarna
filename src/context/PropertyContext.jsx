@@ -94,6 +94,33 @@ export function PropertyProvider({ children }) {
     }
   };
 
+const getAllProperties = async () => {
+  setLoading(true);
+  try {
+    const res = await apiDarna.get("/properties/all"); 
+    return res.data;
+  } catch (e) {
+    console.error("Erreur :", e);
+    return [];
+  } finally {
+    setLoading(false);
+  }
+};
+
+const getPropertyByIdd = async (id) => {
+  setLoading(true);
+  try {
+    const res = await apiDarna.get(`/properties/${id}/all`);
+    return res.data;
+  } catch (e) {
+    console.error("Erreur lors du chargement :", e);
+    return null;
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   useEffect(() => {
     if (token && user) getProperties();
   }, [token, user]);
@@ -108,6 +135,8 @@ export function PropertyProvider({ children }) {
         updateProperty,
         refreshProperties: getProperties,
         getPropertyById,
+        getAllProperties,
+        getPropertyByIdd,
       }}
     >
       {children}
