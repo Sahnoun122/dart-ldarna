@@ -5,11 +5,9 @@ import { Link } from "react-router-dom";
 function Annonces() {
   const { getAllProperties } = useProperties();
 
-  // 🔹 Etats
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Inputs de recherche
   const [keyword, setKeyword] = useState("");
   const [city, setCity] = useState("");
   const [minPrice, setMinPrice] = useState("");
@@ -21,7 +19,6 @@ function Annonces() {
   const [transactionType, setTransactionType] = useState("");
   const [equipment, setEquipment] = useState("");
 
-  // 🔹 Charger toutes les propriétés
   const loadProperties = async () => {
     setLoading(true);
     const data = await getAllProperties();
