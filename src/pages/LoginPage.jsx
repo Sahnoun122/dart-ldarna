@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
+import Navbar from "../components/Navbar";
 import FormLoginDarna from "../components/FormLoginDarna";
 import FormLoginTirelire from "../components/FormLoginTirelire";
 
@@ -21,7 +22,9 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <>
+      <Navbar />
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4 text-center">Connexion</h2>
 
@@ -54,6 +57,7 @@ export default function Login() {
           <FormLoginTirelire onSubmit={handleLogin} />
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

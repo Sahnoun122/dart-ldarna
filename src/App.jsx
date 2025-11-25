@@ -5,22 +5,54 @@ import DashboardDarna from "./pages/darna/DashboardDarna";
 import DashboardTirelire from "./pages/tirelire/DashboardTirelire";
 import Pricing from "./pages/Pricing";
 import Home from "./pages/Home";
+import TestPage from "./pages/TestPage";
 import PropertiesPage from "./pages/darna/PropertiesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import GuestRoute from "./components/GuestRoute";
 import NotificationContainer from "./components/NotificationContainer";
 import PropertyDetail from "./pages/darna/PropertyDetail";
 
 import Annonces from "./pages/Annonces";
 import AnnonceDetail from "./pages/AnnonceDetail";
+
 export default function App() {
   return (
     <>
       <NotificationContainer />
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* Routes publiques (visiteurs uniquement) */}
+        <Route
+          path="/"
+          element={
+            <GuestRoute>
+              <Home />
+            </GuestRoute>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <GuestRoute>
+              <LoginPage />
+            </GuestRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <GuestRoute>
+              <RegisterPage />
+            </GuestRoute>
+          }
+        />
+        
+        {/* Routes semi-publiques */}
+        <Route path="/annonces" element={<Annonces />} />
+        <Route path="/annonce/:id" element={<AnnonceDetail />} />
         <Route path="/pricing" element={<Pricing />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/test" element={<TestPage />} />
+
+        {/* Routes protégées (authentification requise) */}
         <Route
           path="/dashboard-darna"
           element={
@@ -45,9 +77,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/properties/:id" element={<PropertyDetail />} />
-        <Route path="/annonces" element={<Annonces />} />
-        <Route path="/annonce/:id" element={<AnnonceDetail />} />
+        <Route 
+          path="/properties/:id" 
+          element={
+            <ProtectedRoute>
+              <PropertyDetail />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </>
   );

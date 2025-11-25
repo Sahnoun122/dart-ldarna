@@ -1,44 +1,121 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useProperties } from "../context/PropertyContext";
+import { createLeadREST } from "../services/lead.api";
+import { createThread } from "../services/thread.api";
+import { sendMessageREST } from "../services/message.api";
+import { useSocket } from "../socket/SocketProvider";
+import Navbar from "../components/Navbar";
+import MessageInput from "../components/MessageInput";
+import MessageList from "../components/MessageList";
 
 function AnnonceDetail() {
   const { id } = useParams();
-  const { getPropertyByIdd } = useProperties(); // fonction publique
+  const { getPropertyById } = useProperties();
+  const { socket, user } = useSocket();
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [threadId, setThreadId] = useState("");
+  const [messages, setMessages] = useState([]);
+
 
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await getPropertyByIdd(id);
+        const data = await getPropertyById(id);
         setProperty(data);
       } catch (err) {
-        console.error("Erreur lors du chargement de la propriété :", err);
+        console.error("Erreur lors du chargement :", err);
       } finally {
         setLoading(false);
       }
     };
     if (id) load();
-  }, [id, getPropertyByIdd]);
+  }, [id]);
 
-  if (loading) return <p className="text-center">Chargement...</p>;
-  if (!property) return <p className="text-center">Annonce introuvable</p>;
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("message:new", (msg) => {
+      if (msg.threadId === threadId) {
+        setMessages((prev) => [...prev, msg]);
+      }
+    });
+
+    return () => socket.off("message:new");
+  }, [socket, threadId]);
+
+ const startConversation = async () => {
+   if (!user) {
+     alert("Vous devez être connecté pour contacter le propriétaire");
+     return;
+   }
+
+   if (!property) {
+     console.log("Property undefined, cannot start conversation");
+     return;
+   }
+
+   try {
+     const lead = await createLeadREST({
+       propertyId: property._id,
+       ownerId: property.userId,
+       message: "Bonjour, je suis intéressé(e)",
+     });
+
+     const threadRes = await createThread({
+       property: property._id,
+       participants: [user._id, property.userId],
+     });
+
+     setThreadId(threadRes.thread._id);
+   } catch (error) {
+     console.log("Erreur conversation:", error);
+   }
+ };
+
+
+  const sendMessage = async (text) => {
+    try {
+      const msg = await sendMessageREST({
+        threadId,
+        text,
+        to: [property.userId],
+      });
+
+      setMessages((prev) => [...prev, msg]);
+    } catch (error) {
+      console.log("Erreur message :", error);
+    }
+  };
+
+  if (loading) return (
+    <>
+      <Navbar />
+      <p className="text-center p-4">Chargement...</p>
+    </>
+  );
+  if (!property) return (
+    <>
+      <Navbar />
+      <p className="text-center p-4">Annonce introuvable</p>
+    </>
+  );
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
-      {/* Titre */}
+    <>
+      <Navbar />
+      <div className="max-w-5xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">{property.title}</h1>
 
-      {/* Galerie d'images */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-        {property.media?.images?.length > 0 ? (
+        {property.media?.images?.length ? (
           property.media.images.map((img, i) => (
             <img
               key={i}
               src={img}
-              alt={`Image ${i + 1}`}
+              alt=""
               className="h-48 w-full object-cover rounded"
             />
           ))
@@ -51,52 +128,30 @@ function AnnonceDetail() {
         )}
       </div>
 
-      {/* Infos principales */}
-      <div className="mb-4">
-        <p className="text-gray-700 mb-1">
-          💰 Prix: {property.price.toLocaleString()} MAD
-        </p>
-        <p className="text-gray-700 mb-1">📌 Type: {property.type}</p>
-        <p className="text-gray-700 mb-1">
-          📍 Adresse: {property.address?.street}, {property.address?.city}
-        </p>
-        <p className="text-gray-700 mb-1">
-          {property.status === "à vendre" || property.status === "à louer"
-            ? "✅ Disponible"
-            : "❌ Indisponible"}
-        </p>
-      </div>
+      <p>💰 Prix: {property.price} MAD</p>
+      <p>📌 Type: {property.type}</p>
+      <p>📍 Adresse: {property.address?.city}</p>
 
-      {/* Description */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">Description</h2>
-        <p className="text-gray-600">{property.description}</p>
-      </div>
+      {!threadId && (
+        <button
+          onClick={startConversation}
+          className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
+        >
+          Contacter le propriétaire
+        </button>
+      )}
 
-      {/* Caractéristiques */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">Caractéristiques</h2>
-        <ul className="grid grid-cols-2 md:grid-cols-4 gap-2 text-gray-700">
-          {property.surface && <li>🏠 Surface: {property.surface} m²</li>}
-          {property.rooms && <li>🛋 Pièces: {property.rooms}</li>}
-          {property.bedrooms && <li>🛏 Chambres: {property.bedrooms}</li>}
-          {property.characteristics?.bathrooms && (
-            <li>🚿 Salles de bain: {property.characteristics.bathrooms}</li>
-          )}
-          {property.characteristics?.equipment?.length > 0 && (
-            <li>
-              ⚙ Équipements: {property.characteristics.equipment.join(", ")}
-            </li>
-          )}
-          {property.characteristics?.rules?.length > 0 && (
-            <li>📜 Règles: {property.characteristics.rules.join(", ")}</li>
-          )}
-          {property.characteristics?.energyRating && (
-            <li>🔋 Énergie: {property.characteristics.energyRating}</li>
-          )}
-        </ul>
+      {threadId && (
+        <div className="border p-4 rounded mt-6">
+          <h2 className="text-xl font-semibold mb-3">Conversation</h2>
+
+          <MessageList messages={messages} currentUserId={user._id} />
+
+          <MessageInput onSend={sendMessage} />
+        </div>
+      )}
       </div>
-    </div>
+    </>
   );
 }
 

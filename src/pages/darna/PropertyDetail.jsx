@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useProperties } from "../../context/PropertyContext"; // adapte le chemin
+import Navbar from "../../components/Navbar";
 import axios from "axios";
 
 function PropertyDetail() {
@@ -24,11 +25,23 @@ function PropertyDetail() {
     if (id) fetchProperty();
   }, [id, getPropertyById]);
 
-  if (loading) return <p>Chargement...</p>;
-  if (!property) return <p>Propriété introuvable</p>;
+  if (loading) return (
+    <>
+      <Navbar />
+      <p className="text-center p-4">Chargement...</p>
+    </>
+  );
+  if (!property) return (
+    <>
+      <Navbar />
+      <p className="text-center p-4">Propriété introuvable</p>
+    </>
+  );
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
+    <>
+      <Navbar />
+      <div className="max-w-5xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">{property.title}</h1>
 
       {/* Galerie d'images */}
@@ -94,7 +107,8 @@ function PropertyDetail() {
           )}
         </ul>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

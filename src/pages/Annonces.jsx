@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useProperties } from "../context/PropertyContext";
+import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
 
 function Annonces() {
@@ -83,10 +84,17 @@ function Annonces() {
     setLoading(false);
   };
 
-  if (loading) return <p className="text-center">Chargement...</p>;
+  if (loading) return (
+    <>
+      <Navbar />
+      <p className="text-center">Chargement...</p>
+    </>
+  );
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <>
+      <Navbar />
+      <div className="max-w-6xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Toutes les annonces</h1>
 
       <form
@@ -203,7 +211,8 @@ function Annonces() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

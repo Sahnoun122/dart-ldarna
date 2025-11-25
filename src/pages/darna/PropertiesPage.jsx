@@ -5,6 +5,7 @@ import ChampSaisie from "../../components/ChampSaisie";
 import Modal from "../../components/Modal";
 import ConfirmModal from "../../components/ConfirmModal";
 import UploadLocal from "../../components/UploadLocal";
+import Navbar from "../../components/Navbar";
 import { Link } from "react-router-dom";
 
 export default function PropertiesPage() {
@@ -153,7 +154,9 @@ export default function PropertiesPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <>
+      <Navbar />
+      <div className="max-w-6xl mx-auto p-4">
       <div className="flex justify-between mb-6 items-center">
         <h2 className="text-2xl font-bold">Mes Annonces</h2>
         <button
@@ -384,6 +387,7 @@ export default function PropertiesPage() {
         title="Supprimer l'annonce"
         message="Voulez-vous vraiment supprimer cette annonce ?"
       />
-    </div>
+      </div>
+    </>
   );
 }

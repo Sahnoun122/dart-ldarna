@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiDarna } from "../services/api";
+import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 
 export default function Pricing() {
@@ -18,7 +19,9 @@ export default function Pricing() {
   };
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
+    <>
+      <Navbar />
+      <div className="min-h-screen p-8 bg-gray-50">
       <h2 className="text-3xl font-bold text-center mb-8">Plans</h2>
       <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {plans.map((p) => (
@@ -41,6 +44,7 @@ export default function Pricing() {
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

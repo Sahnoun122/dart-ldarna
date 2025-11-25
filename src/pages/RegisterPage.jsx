@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import { useState } from "react";
+import Navbar from "../components/Navbar";
 import FormDarna from "../components/FormDarna";
 import FormTirelire from "../components/FormTirelire";
 export default function Register() {
@@ -21,7 +22,9 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <>
+      <Navbar />
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4 text-center">Créer un compte</h2>
 
@@ -60,6 +63,7 @@ export default function Register() {
           <FormTirelire onSubmit={handleRegister} />
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
