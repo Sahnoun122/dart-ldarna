@@ -10,6 +10,7 @@ import PropertiesPage from "./pages/darna/PropertiesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 import NotificationContainer from "./components/NotificationContainer";
+import LoadingScreen from "./components/LoadingScreen";
 import PropertyDetail from "./pages/darna/PropertyDetail";
 
 import Annonces from "./pages/Annonces";
@@ -18,9 +19,9 @@ import AnnonceDetail from "./pages/AnnonceDetail";
 export default function App() {
   return (
     <>
+      <LoadingScreen />
       <NotificationContainer />
       <Routes>
-        {/* Routes publiques (visiteurs uniquement) */}
         <Route
           path="/"
           element={
@@ -46,13 +47,11 @@ export default function App() {
           }
         />
         
-        {/* Routes semi-publiques */}
         <Route path="/annonces" element={<Annonces />} />
         <Route path="/annonce/:id" element={<AnnonceDetail />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/test" element={<TestPage />} />
 
-        {/* Routes protégées (authentification requise) */}
         <Route
           path="/dashboard-darna"
           element={

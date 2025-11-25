@@ -58,7 +58,7 @@ export default function Navbar() {
                 {/* Profile et déconnexion */}
                 <div className="flex items-center space-x-2 ml-4">
                   <span className="text-sm text-gray-600">
-                    Bonjour, {user.firstName || user.name || 'Utilisateur'}
+                    Bonjour, {user.username || user.firstName || user.name || user.email || 'Utilisateur'}
                   </span>
                   <button
                     onClick={logout}
@@ -110,7 +110,7 @@ export default function Navbar() {
               {user ? (
                 <>
                   <div className="px-3 py-2 text-sm font-medium text-gray-900 border-b">
-                    Bonjour, {user.firstName || user.name || 'Utilisateur'}
+                    Bonjour, {user.username || user.firstName || user.name || user.email || 'Utilisateur'}
                   </div>
                   <NavLink to="/annonces" onClick={() => setIsMobileMenuOpen(false)}>
                     Marketplace

@@ -14,7 +14,7 @@ export default function DashboardTirelire() {
             Dashboard Tirelire
           </h1>
           <p className="text-gray-600">
-            Bienvenue {user?.firstName || user?.name || 'Utilisateur'} - Gestion de votre épargne collective
+            Bienvenue {user?.username || user?.firstName || user?.name || user?.email || 'Utilisateur'} - Gestion de votre épargne collective
           </p>
         </div>
 

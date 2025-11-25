@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import { useAuth } from "../context/AuthContext";
 
 const SocketContext = createContext();
 export const socket = io("http://localhost:8001", { autoConnect: false });
@@ -9,8 +10,7 @@ export const SocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-  const token = localStorage.getItem("token");
+  const { user, token } = useAuth();
 
   useEffect(() => {
     if (!user || !token) return;
@@ -69,6 +69,7 @@ export const SocketProvider = ({ children }) => {
         unreadCount,
         setUnreadCount,
         markAllNotificationsRead,
+        user, 
       }}
     >
       {children}
