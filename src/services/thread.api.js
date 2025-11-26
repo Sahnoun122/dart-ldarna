@@ -1,10 +1,22 @@
-import { addPointerEvent } from "framer-motion";
 import { apiDarna } from "./api";
-export const createThread = (payload)=>{
-    apiDarna.post("/thread" , payload).then((r)=> r.data);
+
+export const createThread = async (payload) => {
+    try {
+        const response = await apiDarna.post("/thread", payload);
+        return response.data;
+    } catch (error) {
+        console.error("Erreur createThread:", error);
+        throw error;
+    }
 }
 
-export const getThreadMessage = (threadId)=> {
-    apiDarna.get(`/thread/ ${threadId}/message` ).then((r)=> r.data);
+export const getThreadMessage = async (threadId) => {
+    try {
+        const response = await apiDarna.get(`/thread/${threadId}/message`);
+        return response.data;
+    } catch (error) {
+        console.error("Erreur getThreadMessage:", error);
+        throw error;
+    }
 }
 

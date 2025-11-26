@@ -8,6 +8,8 @@ import { useSocket } from "../socket/SocketProvider";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import { getUserId, getUserDisplayName, isValidUser } from "../utils/userUtils";
+import { safeExtractId, debugApiResponse } from "../utils/apiUtils";
+import { addMessageSafely, formatMessageForDisplay } from "../utils/messageUtils";
 import Navbar from "../components/Navbar";
 import MessageInput from "../components/MessageInput";
 import MessageList from "../components/MessageList";
@@ -15,7 +17,7 @@ import MessageList from "../components/MessageList";
 function AnnonceDetail() {
   const { id } = useParams();
   const { getPropertyById } = useProperties();
-  const { socket } = useSocket();
+  const { socket, joinThread, sendMessage: sendSocketMessage, connected } = useSocket();
   const { user, debugAuthState } = useAuth();
   const { success, error } = useNotification();
 
@@ -23,7 +25,7 @@ function AnnonceDetail() {
   const [loading, setLoading] = useState(true);
   const [threadId, setThreadId] = useState("");
   const [messages, setMessages] = useState([]);
-
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -40,17 +42,47 @@ function AnnonceDetail() {
     if (id) load();
   }, [id, getPropertyById, error]);
 
+  // Gestion des WebSockets pour les messages
   useEffect(() => {
     if (!socket) return;
 
-    socket.on("message:new", (msg) => {
-      if (msg.threadId === threadId) {
-        setMessages((prev) => [...prev, msg]);
+    const handleNewMessage = (data) => {
+      console.log("📨 Nouveau message reçu:", data);
+      const { message } = data;
+      
+      // Vérifier si c'est pour notre thread actuel
+      if (message.threadId === threadId) {
+        setMessages((prev) => addMessageSafely(prev, formatMessageForDisplay(message)));
       }
-    });
+    };
 
-    return () => socket.off("message:new");
+    const handleThreadJoined = (data) => {
+      console.log("✅ Thread rejoint:", data);
+    };
+
+    const handleError = (error) => {
+      console.error("❌ Erreur socket:", error);
+    };
+
+    // S'abonner aux événements
+    socket.on("message:new", handleNewMessage);
+    socket.on("thread:joined", handleThreadJoined);
+    socket.on("error", handleError);
+
+    return () => {
+      socket.off("message:new", handleNewMessage);
+      socket.off("thread:joined", handleThreadJoined);
+      socket.off("error", handleError);
+    };
   }, [socket, threadId]);
+
+  // Rejoindre le thread quand threadId est défini
+  useEffect(() => {
+    if (threadId && socket && connected) {
+      console.log("🏠 Rejoindre le thread:", threadId);
+      joinThread(threadId);
+    }
+  }, [threadId, socket, connected, joinThread]);
 
  const startConversation = async () => {
    if (!isValidUser(user)) {
@@ -71,22 +103,30 @@ function AnnonceDetail() {
    }
 
    try {
+     // Créer le lead d'abord
      const lead = await createLeadREST({
        propertyId: property._id,
        ownerId: property.userId,
        message: "Bonjour, je suis intéressé(e) par votre propriété",
      });
 
+     debugApiResponse("createLeadREST", lead);
+
+     // Créer le thread
      const threadRes = await createThread({
        property: property._id,
        participants: [userId, property.userId],
      });
 
-     setThreadId(threadRes.thread._id);
+     // Extraire l'ID de façon sécurisée
+     const extractedThreadId = safeExtractId(threadRes, "createThread");
+     
+     setThreadId(extractedThreadId);
      success("Conversation démarrée avec succès!");
    } catch (err) {
-     console.error("Erreur conversation:", err);
-     error("Erreur lors de la création de la conversation: " + (err.response?.data?.message || err.message));
+     console.error("Erreur conversation complète:", err);
+     const errorMessage = err.response?.data?.message || err.message || "Erreur inconnue";
+     error("Erreur lors de la création de la conversation: " + errorMessage);
    }
  };
 
@@ -97,18 +137,35 @@ function AnnonceDetail() {
       return;
     }
 
+    if (!threadId) {
+      error("Aucune conversation active");
+      return;
+    }
+
+    setSendingMessage(true);
+    
     try {
-      const msg = await sendMessageREST({
+      const messageData = {
         threadId,
         text: text.trim(),
         to: [property.userId],
-      });
+      };
+      
+      console.log("📤 Envoi message:", messageData);
 
-      setMessages((prev) => [...prev, msg]);
+      // Utiliser SEULEMENT l'API REST pour éviter les doublons
+      const msg = await sendMessageREST(messageData);
+      
+      // Ajouter le message à l'interface de manière sécurisée
+      setMessages((prev) => addMessageSafely(prev, formatMessageForDisplay(msg)));
+      
       success("Message envoyé!");
+      
     } catch (err) {
-      console.error("Erreur message :", err);
-      error("Erreur lors de l'envoi du message: " + (err.response?.data?.message || err.message));
+      console.error("❌ Erreur envoi message:", err);
+      error("Erreur lors de l'envoi: " + (err.response?.data?.message || err.message));
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -231,7 +288,10 @@ function AnnonceDetail() {
           </div>
 
           <div className="border-t pt-4">
-            <MessageInput onSend={sendMessage} />
+            <MessageInput 
+              onSend={sendMessage} 
+              disabled={sendingMessage} 
+            />
           </div>
         </div>
       )}

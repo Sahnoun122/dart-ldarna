@@ -3,9 +3,12 @@ import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
 
 const SocketContext = createContext();
-export const socket = io("http://localhost:8001", { autoConnect: false });
+
+// Utiliser le même port que l'API (5001)
+const WS_URL = import.meta.env.VITE_WS_URL || "http://localhost:5001";
 
 export const SocketProvider = ({ children }) => {
+  const [socket, setSocket] = useState(null);
   const [connected, setConnected] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -13,20 +16,57 @@ export const SocketProvider = ({ children }) => {
   const { user, token } = useAuth();
 
   useEffect(() => {
-    if (!user || !token) return;
+    if (!user || !token) {
+      // Déconnecter si plus d'utilisateur ou de token
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+        setConnected(false);
+      }
+      return;
+    }
 
-    socket.auth = { token };
-    socket.connect();
+    // Créer une nouvelle instance socket
+    const newSocket = io(WS_URL, {
+      transports: ["websocket", "polling"],
+      autoConnect: false,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+      timeout: 20000,
+      auth: {
+        token: token
+      }
+    });
 
-    socket.on("connect", () => setConnected(true));
-    socket.on("disconnect", () => setConnected(false));
+    // Gérer les événements de connexion
+    newSocket.on("connect", () => {
+      console.log("✅ Socket connecté:", newSocket.id);
+      setConnected(true);
+    });
 
-    socket.on("notifications:new", (notif) => {
+    newSocket.on("disconnect", (reason) => {
+      console.log("❌ Socket déconnecté:", reason);
+      setConnected(false);
+    });
+
+    newSocket.on("connect_error", (error) => {
+      console.error("🔴 Erreur connexion socket:", error.message);
+      console.log("Debug: Token utilisé:", token ? "✅ Présent" : "❌ Manquant");
+      console.log("Debug: URL WebSocket:", WS_URL);
+      setConnected(false);
+    });
+
+    // Gérer les notifications
+    newSocket.on("notification:new", (notif) => {
+      console.log("🔔 Nouvelle notification:", notif);
       setNotifications((prev) => [notif, ...prev]);
       setUnreadCount((c) => c + 1);
     });
 
-    socket.on("lead:new", ({ thread, sysMg }) => {
+    // Gérer les nouveaux leads
+    newSocket.on("lead:new", ({ thread, sysMg }) => {
+      console.log("🎯 Nouveau lead:", { thread, sysMg });
       setNotifications((prev) => [
         {
           id: sysMg._id || `lead-${thread._id}`,
@@ -42,21 +82,49 @@ export const SocketProvider = ({ children }) => {
       setUnreadCount((c) => c + 1);
     });
 
+    // Gérer les erreurs
+    newSocket.on("error", (error) => {
+      console.error("🔴 Erreur socket:", error);
+    });
+
+    // Se connecter
+    newSocket.connect();
+    setSocket(newSocket);
+
+    // Cleanup à la déconnexion
     return () => {
-      socket.off();
-      socket.disconnect();
+      newSocket.off();
+      newSocket.disconnect();
     };
   }, [user, token]);
 
   const markAllNotificationsRead = () => {
+    if (!socket) return;
+    
     const ids = notifications.filter((n) => !n.read).map((n) => n.id);
     if (ids.length === 0) return;
-    socket.emit("notifications:read", { notificationIds: ids }, (ack) => {
+    
+    socket.emit("notification:read", { notificationIds: ids }, (ack) => {
       if (ack?.status === "ok") {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         setUnreadCount(0);
+        console.log("✅ Notifications marquées comme lues");
       }
     });
+  };
+
+  const joinThread = (threadId) => {
+    if (!socket || !threadId) return;
+    
+    console.log("🏠 Rejoindre thread:", threadId);
+    socket.emit("thread:join", { threadId });
+  };
+
+  const sendMessage = (messageData, callback) => {
+    if (!socket) return;
+    
+    console.log("📤 Envoi message via socket:", messageData);
+    socket.emit("message:send", messageData, callback);
   };
 
   return (
@@ -69,7 +137,9 @@ export const SocketProvider = ({ children }) => {
         unreadCount,
         setUnreadCount,
         markAllNotificationsRead,
-        user, 
+        joinThread,
+        sendMessage,
+        user,
       }}
     >
       {children}
