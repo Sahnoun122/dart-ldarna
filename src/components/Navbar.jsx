@@ -44,6 +44,7 @@ export default function Navbar() {
                 <NavLink to="/dashboard-darna">Dashboard Darna</NavLink>
                 <NavLink to="/dashboard-tirelire">Dashboard Tirelire</NavLink>
                 <NavLink to="/properties">Mes Propriétés</NavLink>
+                <NavLink to="/messages">Messages</NavLink>
                 
                 {/* Notifications */}
                 <div className="relative">
@@ -123,6 +124,9 @@ export default function Navbar() {
                   </NavLink>
                   <NavLink to="/properties" onClick={() => setIsMobileMenuOpen(false)}>
                     Mes Propriétés
+                  </NavLink>
+                  <NavLink to="/messages" onClick={() => setIsMobileMenuOpen(false)}>
+                    Messages
                   </NavLink>
                   <button
                     onClick={() => {

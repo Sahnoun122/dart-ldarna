@@ -12,6 +12,7 @@ import GuestRoute from "./components/GuestRoute";
 import NotificationContainer from "./components/NotificationContainer";
 import LoadingScreen from "./components/LoadingScreen";
 import PropertyDetail from "./pages/darna/PropertyDetail";
+import MessagesPage from "./pages/MessagesPage";
 
 import Annonces from "./pages/Annonces";
 import AnnonceDetail from "./pages/AnnonceDetail";
@@ -81,6 +82,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <PropertyDetail />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/messages" 
+          element={
+            <ProtectedRoute>
+              <MessagesPage />
             </ProtectedRoute>
           } 
         />

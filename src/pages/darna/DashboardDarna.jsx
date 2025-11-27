@@ -28,7 +28,10 @@ export default function DashboardDarna() {
               </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <Link 
+            to="/messages"
+            className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow cursor-pointer block"
+          >
             <div className="flex items-center">
               <div className="text-green-600 text-2xl mr-4">💬</div>
               <div>
@@ -36,7 +39,7 @@ export default function DashboardDarna() {
                 <p className="text-gray-500">Communications clients</p>
               </div>
             </div>
-          </div>
+          </Link>
           <div className="bg-white p-6 rounded-xl shadow-sm border">
             <div className="flex items-center">
               <div className="text-orange-600 text-2xl mr-4">📊</div>
@@ -48,7 +51,7 @@ export default function DashboardDarna() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link
             to="/properties"
             className="block bg-gradient-to-r from-blue-500 to-blue-600 text-white p-8 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg"
@@ -59,6 +62,19 @@ export default function DashboardDarna() {
                 <p className="text-blue-100">Voir et gérer toutes vos annonces immobilières</p>
               </div>
               <div className="text-4xl">🏢</div>
+            </div>
+          </Link>
+
+          <Link
+            to="/messages"
+            className="block bg-gradient-to-r from-purple-500 to-purple-600 text-white p-8 rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Messages</h2>
+                <p className="text-purple-100">Gérer vos conversations avec les clients</p>
+              </div>
+              <div className="text-4xl">💬</div>
             </div>
           </Link>
 

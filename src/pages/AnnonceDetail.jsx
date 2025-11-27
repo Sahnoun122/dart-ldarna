@@ -1,31 +1,23 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useProperties } from "../context/PropertyContext";
 import { createLeadREST } from "../services/lead.api";
 import { createThread } from "../services/thread.api";
-import { sendMessageREST } from "../services/message.api";
-import { useSocket } from "../socket/SocketProvider";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import { getUserId, getUserDisplayName, isValidUser } from "../utils/userUtils";
 import { safeExtractId, debugApiResponse } from "../utils/apiUtils";
-import { addMessageSafely, formatMessageForDisplay } from "../utils/messageUtils";
 import Navbar from "../components/Navbar";
-import MessageInput from "../components/MessageInput";
-import MessageList from "../components/MessageList";
 
 function AnnonceDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { getPropertyById } = useProperties();
-  const { socket, joinThread, sendMessage: sendSocketMessage, connected } = useSocket();
   const { user, debugAuthState } = useAuth();
   const { success, error } = useNotification();
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [threadId, setThreadId] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -42,48 +34,6 @@ function AnnonceDetail() {
     if (id) load();
   }, [id, getPropertyById, error]);
 
-  // Gestion des WebSockets pour les messages
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleNewMessage = (data) => {
-      console.log("📨 Nouveau message reçu:", data);
-      const { message } = data;
-      
-      // Vérifier si c'est pour notre thread actuel
-      if (message.threadId === threadId) {
-        setMessages((prev) => addMessageSafely(prev, formatMessageForDisplay(message)));
-      }
-    };
-
-    const handleThreadJoined = (data) => {
-      console.log("✅ Thread rejoint:", data);
-    };
-
-    const handleError = (error) => {
-      console.error("❌ Erreur socket:", error);
-    };
-
-    // S'abonner aux événements
-    socket.on("message:new", handleNewMessage);
-    socket.on("thread:joined", handleThreadJoined);
-    socket.on("error", handleError);
-
-    return () => {
-      socket.off("message:new", handleNewMessage);
-      socket.off("thread:joined", handleThreadJoined);
-      socket.off("error", handleError);
-    };
-  }, [socket, threadId]);
-
-  // Rejoindre le thread quand threadId est défini
-  useEffect(() => {
-    if (threadId && socket && connected) {
-      console.log("🏠 Rejoindre le thread:", threadId);
-      joinThread(threadId);
-    }
-  }, [threadId, socket, connected, joinThread]);
-
  const startConversation = async () => {
    if (!isValidUser(user)) {
      error("Vous devez être connecté pour contacter le propriétaire");
@@ -97,8 +47,31 @@ function AnnonceDetail() {
 
    // Vérifier que l'utilisateur ne contacte pas sa propre propriété
    const userId = getUserId(user);
-   if (property.userId === userId) {
+   const propertyOwnerId = property.owner?._id || property.owner || property.userId; // Support complet
+   console.log('🔍 Debug conversation:', {
+     userId: userId,
+     propertyUserId: property.userId,
+     propertyOwner: property.owner,
+     propertyOwnerId: propertyOwnerId,
+     sameUser: userId === propertyOwnerId,
+     propertyKeys: Object.keys(property)
+   });
+   
+   if (propertyOwnerId === userId) {
      error("Vous ne pouvez pas contacter votre propre annonce");
+     return;
+   }
+
+   // Vérifier qu'on a deux utilisateurs différents
+   if (!userId || !propertyOwnerId) {
+     console.error('❌ Données manquantes:', { 
+       userId, 
+       propertyOwnerId, 
+       property: property,
+       ownerField: property.owner,
+       userIdField: property.userId
+     });
+     error("Impossible de démarrer la conversation. Données propriétaire manquantes.");
      return;
    }
 
@@ -106,7 +79,7 @@ function AnnonceDetail() {
      // Créer le lead d'abord
      const lead = await createLeadREST({
        propertyId: property._id,
-       ownerId: property.userId,
+       ownerId: propertyOwnerId,
        message: "Bonjour, je suis intéressé(e) par votre propriété",
      });
 
@@ -115,14 +88,17 @@ function AnnonceDetail() {
      // Créer le thread
      const threadRes = await createThread({
        property: property._id,
-       participants: [userId, property.userId],
+       participants: [userId, propertyOwnerId],
      });
 
      // Extraire l'ID de façon sécurisée
      const extractedThreadId = safeExtractId(threadRes, "createThread");
      
-     setThreadId(extractedThreadId);
-     success("Conversation démarrée avec succès!");
+     success("Redirection vers la messagerie...");
+     
+     // Rediriger vers la page de messagerie avec le thread sélectionné
+     navigate(`/messages?thread=${extractedThreadId}`);
+     
    } catch (err) {
      console.error("Erreur conversation complète:", err);
      const errorMessage = err.response?.data?.message || err.message || "Erreur inconnue";
@@ -243,7 +219,7 @@ function AnnonceDetail() {
             </a>
           </div>
         </div>
-      ) : property.userId === getUserId(user) ? (
+      ) : (property.userId === getUserId(user) || property.owner === getUserId(user)) ? (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-6">
           <div className="flex items-center">
             <div className="text-blue-600 text-2xl mr-3">👤</div>
@@ -253,7 +229,7 @@ function AnnonceDetail() {
             </div>
           </div>
         </div>
-      ) : !threadId ? (
+      ) : (
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -269,29 +245,6 @@ function AnnonceDetail() {
             >
               💬 Contacter
             </button>
-          </div>
-        </div>
-      ) : null}
-
-      {threadId && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mt-8 shadow-sm">
-          <div className="flex items-center mb-4">
-            <div className="text-blue-600 text-2xl mr-3">💬</div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">Conversation avec le propriétaire</h2>
-              <p className="text-gray-600 text-sm">Discutez directement avec le propriétaire de cette propriété</p>
-            </div>
-          </div>
-
-          <div className="border rounded-lg p-4 bg-gray-50 mb-4 max-h-80 overflow-y-auto">
-            <MessageList messages={messages} currentUserId={getUserId(user)} />
-          </div>
-
-          <div className="border-t pt-4">
-            <MessageInput 
-              onSend={sendMessage} 
-              disabled={sendingMessage} 
-            />
           </div>
         </div>
       )}

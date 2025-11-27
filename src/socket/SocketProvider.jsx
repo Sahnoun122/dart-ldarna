@@ -116,15 +116,19 @@ export const SocketProvider = ({ children }) => {
   const joinThread = (threadId) => {
     if (!socket || !threadId) return;
     
-    console.log("🏠 Rejoindre thread:", threadId);
-    socket.emit("thread:join", { threadId });
+    console.log('🏠 Rejoindre room:', threadId);
+    socket.emit('join-room', { threadId });
   };
 
-  const sendMessage = (messageData, callback) => {
-    if (!socket) return;
+  const sendMessage = (threadId, message, recipientId) => {
+    if (!socket || !threadId || !message) return;
     
-    console.log("📤 Envoi message via socket:", messageData);
-    socket.emit("message:send", messageData, callback);
+    console.log('📤 Envoi message simple:', { threadId, message });
+    socket.emit('send-message', {
+      threadId,
+      message: message.trim(),
+      recipientId
+    });
   };
 
   return (

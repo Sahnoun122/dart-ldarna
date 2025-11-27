@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function MessageInput({ onSend, disabled = false }) {
+export default function MessageInput({ onSend, disabled = false, placeholder = "Écrire un message..." }) {
     const [text, setText] = useState("");
     const [sending, setSending] = useState(false);
 
@@ -32,7 +32,7 @@ export default function MessageInput({ onSend, disabled = false }) {
                 onChange={(e) => setText(e.target.value)}
                 onKeyPress={handleKeyPress}
                 className="flex-1 border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Écrire un message..."
+                placeholder={placeholder}
                 disabled={sending || disabled}
             />
 
